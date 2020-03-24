@@ -63,7 +63,8 @@ def test(benchmark, violated_const_ratio, test_seed, start_point_seed = 2):
             res[train_size][split_seed] ={'d_val':d_val, 'd_train': d_train}
 
 
-            model_1 = Regressor(params, d_train, d_test, d_val,  start_point_seed) # 0 is random seed of pytorch make sure all models starting from the same point
+            model_1 = Regressor(params, d_train, d_test, d_val,  start_point_seed) # start_point_seed is random seed of pytorch
+            # make sure all models starting from the same initial points
             model_1.train()
             tmp = model_1.test()
             res[train_size][split_seed]['model_1_perf'] = copy.deepcopy(tmp)
@@ -119,7 +120,7 @@ def test(benchmark, violated_const_ratio, test_seed, start_point_seed = 2):
 
 
 
-test('correlation', 0.6, 2, 1)
+#test('correlation', 0.6, 2, 1)
 
 if __name__ == "__main__":
 
