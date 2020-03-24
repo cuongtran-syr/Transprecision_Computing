@@ -14,5 +14,7 @@ Codes for IJCAI 20 and some data exploration. Below is summary of key modificati
  
  ### 2. Codes to run experiments
  
-* Check `src/run_experiments.py`
+* Check `IJCAI/src/run_experiments.py`
+
+
 
