@@ -44,7 +44,7 @@ def test(benchmark, violated_const_ratio, test_seed, start_point_seed = 2):
     val_size = 300 # fix validation set size
     for train_size in [200, 400, 600, 800, 1000]:
         res[train_size] = {}
-        for split_seed in range(1):
+        for split_seed in range(20):
             print('train size = {} , seed = {}'.format(train_size, split_seed))
             np.random.seed(split_seed)
             X_train,y_train  = copy.deepcopy( d_trainall._dataset)
