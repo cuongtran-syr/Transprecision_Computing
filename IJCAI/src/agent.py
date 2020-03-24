@@ -75,7 +75,7 @@ class AbstractAgent():
         self.val_vc_list = copy.deepcopy(val_vc_list)
 
         val_mae_list = [(x - min(val_mae_list)) / float(max(val_mae_list) - min(val_mae_list)) for x in val_mae_list]
-        if max(val_vc_list)>0 and (max(val_vc_list) > min(val_vc_list)):
+        if max(val_vc_list) > min(val_vc_list):
                 val_vc_list = [(x - min(val_vc_list)) / float(max(val_vc_list) - min(val_vc_list)) for x in val_vc_list]
 
         metric_list = np.asarray(val_mae_list) + np.asarray(val_vc_list)
