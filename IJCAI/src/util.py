@@ -95,9 +95,11 @@ def duplicates(error):
 
 # this procedure is used to create dataset which have a high ratio of constraint violations.
 # this allows for consistent value of the regularizator at training time.
-def build_dataset(benchmark, n_data, violations_ratio):
+def build_dataset(benchmark, n_data, violations_ratio, seed):
     """ Builds a dataset with the desired amount of violated constraints """
+    np.random.seed(seed)
     nerr = 30
+
     suff_label_target = 'err_ds_'
     n_violated_const = int(n_data * violations_ratio)
     labels_target = [suff_label_target + str(i) for i in range(nerr)]

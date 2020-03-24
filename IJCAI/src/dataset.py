@@ -39,18 +39,16 @@ class Dataset(object):
     def __init__(self, params, mode, device):
         assert mode in ['train', 'test', 'valid']
         np.random.seed(params['seed'])
-        self._const = 0  # constrain counter
+        #self._const = 0  # constrain counter
         self._device = device
         self._n_data = params['n_data']
         self._benchmark = params['benchmark']
         self._batchsize = params['batch_size']
         self._violated_const_ratio = params['violated_const_ratio'] if mode == 'train' else 0
         # builds ad hoc dataset, the number of violated_ constraints can be tuned
-        (X, y) = util.build_dataset(self._benchmark, self._n_data, self._violated_const_ratio)
-        self._const += len(util.violated_const(X, y))
+        (X, y) =  util.build_dataset(self._benchmark, self._n_data, self._violated_const_ratio, params['seed'])
         self._n_var = len(X[0])
-        # select data
-        indices = self._get_indexes(params, self._n_data, mode)
+        indices = self._get_indexes(params, self._n_data, mode, params['seed'])
         X, y = X[indices], y[indices]
         self._dataset = tuple([X, y])
 
@@ -58,12 +56,13 @@ class Dataset(object):
     def n_var(self):
         return self._n_var
 
-    @property
-    def const(self):
-        return self._const
+    #@property
+    #def const(self):
+    #    return self._const
 
-    def _get_indexes(self, params, n_data, mode):
+    def _get_indexes(self, params, n_data, mode, seed):
         indices = np.arange(n_data)
+        np.random.seed(seed)
         np.random.shuffle(indices)
         split_size = dict()
         modeidx = {'train': 0, 'test': 1, 'valid': 2}

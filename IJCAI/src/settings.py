@@ -1,1 +1,1 @@
-path_to_repo = '/Users/federicobaldo/Documents/UniBo/IJCAI-kwb_nn/'
+path_to_repo = '/Users/welcome/Google Drive (cuong.tranus@gmail.com)/Transprecision_Computing/IJCAI/'

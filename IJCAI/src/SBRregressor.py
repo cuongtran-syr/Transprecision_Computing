@@ -4,29 +4,19 @@ import network, dataset, agent, util
 import numpy as np
 
 from torch_inputs import *
+from agent import *
 
+class SBRregressor(AbstractAgent):
+    def __init__(self, params, d_train, d_test, d_val, start_point_seed):
+        super(SBRregressor, self).__init__(params, d_train, d_test, d_val, start_point_seed)
 
-class SBRregressor(agent.AbstractAgent):
-    def __init__(self, params, d_train, d_test, d_val):
-        super(SBRregressor, self).__init__(params, d_train, d_test, d_val)
-
-        self._train_data = d_train
-        net_par = {'i_dim': self._train_data.n_var,
-                   'o_dim': 1,
-                   'h_dim': 10,
-                   'n_layers': 3}
-
-        self._model = network.Net(net_par)
-
-        # Optimizers, for each dataset partition
-        self._optimizers = torch.optim.Adam(self._model.parameters(), lr=0.001)
-        # Loss functions for each dataset partition
         self._loss = nn.MSELoss()
         self._const_avg_batch = 0
         self.count_const()
-        self._LR_rate = 1e-5
-        self._LR_multiplier = 0
+        self._LR_rate = None
+
         self._violations_epoch = []
+        self._LR_multiplier_list = []
 
     def count_const(self):
         const_batch = []
@@ -39,7 +29,15 @@ class SBRregressor(agent.AbstractAgent):
     def const_avg_batch(self):
         return self.const_avg_batch
 
-    def train(self):
+    def train(self, options):
+
+        super()._init_model()
+
+        if options['mult_fixed']:
+            self._LR_multiplier = 1
+        else:
+            self._LR_multiplier = 0
+
         for epoch in range(self._nepochs):
             violations_epoch = []
             for (x, y) in self._train_data:
@@ -48,9 +46,11 @@ class SBRregressor(agent.AbstractAgent):
                 loss, violation = self.compute_loss(M, y_pred, y, x)
                 self.propagate_loss(loss)
                 violations_epoch.append(violation)
-            self.update_LR_multipliers(violations_epoch)
-            self.validation_step(epoch)
+            if not options['mult_fixed']:
+                self.update_LR_multipliers(violations_epoch)
             self.print_report(epoch)
+            self.validation_step(epoch)
+
 
     ''' Override the compute_loss method in AbstractAgent class'''
 
@@ -85,4 +85,6 @@ class SBRregressor(agent.AbstractAgent):
         self._LR_multiplier = self._LR_multiplier + (self._LR_rate * torch.sum(Ten(violations)))
 
     def print_report(self, epoch):
-        print('\t LR mult:', self._LR_multiplier)
+        self._LR_multiplier_list.append(copy.deepcopy(self._LR_multiplier))
+        pass
+        #print('\t LR mult:', self._LR_multiplier)

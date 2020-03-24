@@ -1,36 +1,32 @@
-""" strongly inspired by Ferdinando Fioretto's code """
-import network, dataset, agent, util
+""" Modified the lagrangian term """
 
-import numpy as np
+from agent import *
+from torch import nn
 
-from torch_inputs import *
+class SBRregressor2(AbstractAgent):
+    def __init__(self, params, d_train, d_test, d_val, start_point_seed):
+        super(SBRregressor2, self).__init__(params, d_train, d_test, d_val, start_point_seed)
 
 
-class SBRregressor2(agent.AbstractAgent):
-    def __init__(self, params, d_train, d_test, d_val):
-        super(SBRregressor2, self).__init__(params, d_train, d_test, d_val)
-
-        self._train_data = d_train
-        net_par = {'i_dim': self._train_data.n_var,
-                   'o_dim': 1,
-                    'h_dim': 10,
-                   'n_layers': 3}
-        self._model = network.Net(net_par)
-        self._optimizers = torch.optim.Adam(self._model.parameters(), lr=0.001)
-        # Loss functions for each dataset partition
         self._loss = nn.MSELoss()
-        self.initialize_LR_multipliers()
-        self._LR_rate =  1e-4
+        #self.initialize_LR_multipliers()
+        self._LR_rate =  None
         self._violations_epoch = []
         self.const_avg_batch = 0
+        self._LR_multiplier_list = []
 
-    def initialize_LR_multipliers(self):
+
+    def initialize_LR_multipliers(self, options):
         self._LR_multipliers = []
         const_batch = []
         for (x, y) in self._train_data:
             n = max(1, len(util.couples(x.tolist())))
             const_batch.append(n)
-            self._LR_multipliers.append(np.zeros(n))
+            if options['mult_fixed']:
+                # all Lagrangian multipliers set to be one, and will not be updated during optimization
+                self._LR_multipliers.append(np.ones(n))
+            else:
+                self._LR_multipliers.append(np.zeros(n))
         self.const_avg_batch = int(np.mean(np.array(const_batch)))
         self._LR_multipliers = np.concatenate(self._LR_multipliers)
 
@@ -38,7 +34,12 @@ class SBRregressor2(agent.AbstractAgent):
     def const_avg_batch(self):
         return self.const_avg_batch()
 
-    def train(self):
+    def train(self, options):
+
+        super()._init_model()
+
+        self.initialize_LR_multipliers(options)
+
         for epoch in range(self._nepochs):
             violations_epoch = []
             offset = 0
@@ -49,8 +50,9 @@ class SBRregressor2(agent.AbstractAgent):
                 self.propagate_loss(loss)
                 violations_epoch += violations
                 offset += len(violations)
+            if not options['mult_fixed']:
+                self.update_LR_multipliers(violations_epoch)
 
-            self.update_LR_multipliers(violations_epoch)
             self.validation_step(epoch)
             self.print_report(epoch)
 
@@ -64,7 +66,11 @@ class SBRregressor2(agent.AbstractAgent):
         # filter only the positive values (violations), therefore the violations to the constraint
         rules = torch.max(Ten(np.zeros(rules.size()[0])), torch.transpose(rules, 0, 1))[0]
         # LR * max(0, g(x') - g(x''))
-        loss += torch.sum(Ten([self._LR_multipliers[offset + i] * rules[i] for i in range(len(rules))]))
+        lr_mults = Ten([self._LR_multipliers[offset + i] for i in range(len(rules))])
+        loss += torch.sum(lr_mults * rules)
+        # The below code seems  a bug, ignoring the contribution of violated constraints during optimization
+        #
+        #loss += torch.sum(Ten([self._LR_multipliers[offset + i] * rules[i] for i in range(len(rules))]))
         violations = [x.item() for x in rules]
 
         return loss, violations
@@ -90,6 +96,7 @@ class SBRregressor2(agent.AbstractAgent):
             self._LR_multipliers[i] = self._LR_multipliers[i] + (self._LR_rate * violations[i])
 
     def print_report(self, epoch):
-        print('\t LR mult:', self._LR_multipliers)
-        print('\t AVG LR mult:', np.sum(self._LR_multipliers))
+        self._LR_multiplier_list.append(copy.deepcopy(self._LR_multipliers))
+        # a single element contains a vector of lambda_{i,j} at epoch time t
+        pass
 

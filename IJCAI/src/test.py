@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# USE THIS FOR REFERENCE ONLY
 import csv
 import settings
 import argparse
