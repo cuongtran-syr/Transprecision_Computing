@@ -11,4 +11,8 @@ Codes for IJCAI 20 and some data exploration. Below is summary of key modificati
  model's parameter. I corrected that. 
  
  * Revise structure of the constructor `__init__` function a bit, and add grid search opt to models.
+ 
+ ### 2. Codes to run experiments
+ 
+* Check `src/run_experiments.py`
 
