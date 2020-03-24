@@ -62,8 +62,8 @@ class AbstractAgent():
         logs_list = []
         _LR_multiplier_list_list = []
         for lr in lr_list:
-            self._LR_rate = lr
             self._init_model()
+            self._LR_rate = lr
             self.train(options = {'mult_fixed':False})
             val_mae_list.append(copy.deepcopy(self.logs[-1][0]))  # use deep copy for safety reason
             val_vc_list.append(copy.deepcopy(self.logs[-1][2]))
@@ -75,9 +75,9 @@ class AbstractAgent():
         self.val_mae_list = copy.deepcopy(val_mae_list)
         self.val_vc_list = copy.deepcopy(val_vc_list)
 
-        val_mae_list = [(x - min(val_mae_list)) / float(max(val_mae_list)) for x in val_mae_list]
+        val_mae_list = [(x - min(val_mae_list)) / float(max(val_mae_list) - min(val_mae_list)) for x in val_mae_list]
         if max(val_vc_list)>0:
-            val_vc_list = [(x - min(val_vc_list)) / float(max(val_vc_list)) for x in val_vc_list]
+            val_vc_list = [(x - min(val_vc_list)) / float(max(val_vc_list) - min(val_vc_list)) for x in val_vc_list]
         metric_list = val_mae_list + val_vc_list
 
         best_index = [idx for idx in range(5) if metric_list[idx] == min(metric_list)][0]
